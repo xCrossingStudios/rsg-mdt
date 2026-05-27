@@ -1,0 +1,91 @@
+-- RSG MDT Configuration
+Config = Config or {}
+
+-- ============================================
+-- Law Enforcement Jobs
+-- Jobs that can access the MDT system
+-- ============================================
+Config.LawJobs = {
+    ['vallaw'] = {
+        label = 'Valentine Law Enforcement',
+        grades = {
+            [0] = { label = 'Recruit', canCreateRecords = true, canDeleteRecords = false, canManageWarrants = false },
+            [1] = { label = 'Deputy',  canCreateRecords = true, canDeleteRecords = false, canManageWarrants = true },
+            [2] = { label = 'Sheriff', canCreateRecords = true, canDeleteRecords = true,  canManageWarrants = true, isAdmin = true },
+        }
+    },
+    ['rholaw'] = {
+        label = 'Rhodes Law Enforcement',
+        grades = {
+            [0] = { label = 'Recruit', canCreateRecords = true, canDeleteRecords = false, canManageWarrants = false },
+            [1] = { label = 'Deputy',  canCreateRecords = true, canDeleteRecords = false, canManageWarrants = true },
+            [2] = { label = 'Sheriff', canCreateRecords = true, canDeleteRecords = true,  canManageWarrants = true, isAdmin = true },
+        }
+    },
+    ['blklaw'] = {
+        label = 'Blackwater Law Enforcement',
+        grades = {
+            [0] = { label = 'Recruit', canCreateRecords = true, canDeleteRecords = false, canManageWarrants = false },
+            [1] = { label = 'Deputy',  canCreateRecords = true, canDeleteRecords = false, canManageWarrants = true },
+            [2] = { label = 'Sheriff', canCreateRecords = true, canDeleteRecords = true,  canManageWarrants = true, isAdmin = true },
+        }
+    },
+    ['strlaw'] = {
+        label = 'Strawberry Law Enforcement',
+        grades = {
+            [0] = { label = 'Recruit', canCreateRecords = true, canDeleteRecords = false, canManageWarrants = false },
+            [1] = { label = 'Deputy',  canCreateRecords = true, canDeleteRecords = false, canManageWarrants = true },
+            [2] = { label = 'Sheriff', canCreateRecords = true, canDeleteRecords = true,  canManageWarrants = true, isAdmin = true },
+        }
+    },
+    ['stdenlaw'] = {
+        label = 'Saint Denis Law Enforcement',
+        grades = {
+            [0] = { label = 'Recruit', canCreateRecords = true, canDeleteRecords = false, canManageWarrants = false },
+            [1] = { label = 'Deputy',  canCreateRecords = true, canDeleteRecords = false, canManageWarrants = true },
+            [2] = { label = 'Sheriff', canCreateRecords = true, canDeleteRecords = true,  canManageWarrants = true, isAdmin = true },
+        }
+    },
+}
+
+-- ============================================
+-- MDT Settings
+-- ============================================
+Config.Settings = {
+    command = 'mdt',
+    keybind = nil,
+    requireOnDuty = true,
+    maxSearchResults = 50,
+    recordRetentionDays = 0,
+    warrantExpirationDays = 0,
+    debug = false
+}
+
+-- ============================================
+-- Report Incident Types
+-- Add or remove types based on server needs
+-- label: Display name shown in UI
+-- value: Stored in database (use lowercase, no spaces)
+-- color: Tailwind classes for badge styling
+-- ============================================
+Config.IncidentTypes = {
+    { value = 'incident', label = 'Incident', color = 'bg-red-950/50 text-red-400 border-red-900' },
+    { value = 'arrest', label = 'Arrest', color = 'bg-orange-950/50 text-orange-400 border-orange-900' },
+    { value = 'investigation', label = 'Investigation', color = 'bg-blue-950/50 text-blue-400 border-blue-900' },
+    { value = 'traffic', label = 'Traffic', color = 'bg-green-950/50 text-green-400 border-green-900' },
+    { value = 'witness', label = 'Witness Statement', color = 'bg-purple-950/50 text-purple-400 border-purple-900' },
+    { value = 'evidence', label = 'Evidence Log', color = 'bg-cyan-950/50 text-cyan-400 border-cyan-900' },
+}
+
+-- ============================================
+-- Default Values
+-- ============================================
+Config.Defaults = {
+    jobGrade = {
+        label = 'Unknown',
+        canCreateRecords = false,
+        canDeleteRecords = false,
+        canManageWarrants = false,
+        isAdmin = false
+    }
+}
