@@ -61,7 +61,7 @@ local function CheckVersion()
 
         if isVersionOutdated(currentVersion, remoteVersion) then
             printLog('error', ('OUTDATED! Please update to version %s'):format(remoteVersion))
-            printLog('error', 'Download from: https://github.com/RexShackGaming/'..GetCurrentResourceName()..'')
+            printLog('error', 'Download from: https://github.com/Rexshack-RedM/'..GetCurrentResourceName()..'')
         else
             printLog('warning', ('You are running a newer version (%s) than the remote (%s). Possible dev build?'):format(currentVersion, remoteVersion))
         end
