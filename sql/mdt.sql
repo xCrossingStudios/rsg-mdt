@@ -119,8 +119,54 @@ CREATE TABLE IF NOT EXISTS `mdt_audit_logs` (
     INDEX `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Default Roles
-INSERT IGNORE INTO `mdt_roles` (`name`, `label`, `permissions`) VALUES
-    ('admin', 'Administrator', '{"canCreateRecords": true, "canDeleteRecords": true, "canManageWarrants": true, "isAdmin": true}'),
-    ('supervisor', 'Supervisor', '{"canCreateRecords": true, "canDeleteRecords": true, "canManageWarrants": true, "isAdmin": false}'),
-    ('officer', 'Officer', '{"canCreateRecords": true, "canDeleteRecords": false, "canManageWarrants": false, "isAdmin": false}');
+-- Charge Templates Table
+CREATE TABLE IF NOT EXISTS `mdt_charge_templates` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `fine` INT DEFAULT 0,
+    `jailtime` INT DEFAULT 0,
+    `category` VARCHAR(50) DEFAULT 'misdemeanor',
+    `created_by` VARCHAR(50),
+    `created_by_name` VARCHAR(100),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_category` (`category`),
+    INDEX `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Issued Charges Table (tracks charges applied to citizens)
+CREATE TABLE IF NOT EXISTS `mdt_issued_charges` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL,
+    `citizen_name` VARCHAR(100) NOT NULL,
+    `charge_template_id` INT,
+    `charge_name` VARCHAR(255) NOT NULL,
+    `charge_description` TEXT,
+    `fine` INT DEFAULT 0,
+    `jailtime` INT DEFAULT 0,
+    `officer` VARCHAR(100) NOT NULL,
+    `officer_cid` VARCHAR(50),
+    `report_id` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_citizenid` (`citizenid`),
+    INDEX `idx_officer` (`officer`),
+    FOREIGN KEY (`charge_template_id`) REFERENCES `mdt_charge_templates`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Default Charge Templates
+INSERT IGNORE INTO `mdt_charge_templates` (`name`, `description`, `fine`, `jailtime`, `category`) VALUES
+    ('Assault', 'Physical assault on another person', 50, 2, 'felony'),
+    ('Battery', 'Unlawful physical force against another', 75, 3, 'felony'),
+    ('Theft', 'Stealing property valued under $50', 25, 0, 'misdemeanor'),
+    ('Grand Theft', 'Stealing property valued $50 or more', 100, 6, 'felony'),
+    ('Trespassing', 'Unauthorized entry onto private property', 15, 0, 'misdemeanor'),
+    ('Public Intoxication', 'Being drunk in public', 10, 0, 'infraction'),
+    ('Disorderly Conduct', 'Disturbing the peace', 20, 0, 'misdemeanor'),
+    ('Vandalism', 'Willful destruction of property', 30, 0, 'misdemeanor'),
+    ('Fraud', 'Deception for personal gain', 150, 12, 'felony'),
+    ('Murder', 'Unlawful killing of another person', 0, 60, 'felony'),
+    ('Horse Theft', 'Stealing a horse or other mount', 200, 24, 'felony'),
+    ('Bank Robbery', 'Robbery of a banking institution', 500, 48, 'felony'),
+    ('Resisting Arrest', 'Resisting or fleeing from law enforcement', 50, 1, 'misdemeanor'),
+    ('Obstruction of Justice', 'Interfering with law enforcement duties', 40, 0, 'misdemeanor');

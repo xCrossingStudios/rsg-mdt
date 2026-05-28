@@ -1,26 +1,58 @@
-import { useState, useEffect } from 'react';
-import { fetchNui } from '../hooks/useNui';
-import type { Citizen } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { fetchNui, useNuiEvent } from '../hooks/useNui';
+import type { Citizen, IssuedCharge } from '../types';
+import { IssueChargesModal } from './IssueChargesModal';
+import { CriminalRecordList } from './CriminalRecordList';
+import { ChargeDetailModal } from './ChargeDetailModal';
 
 interface ProfileModalProps {
   citizen: Citizen;
   onClose: () => void;
   onIssueWarrant?: (citizenid: string, name: string) => void;
+  onChargesIssued?: () => void;
 }
 
-export function ProfileModal({ citizen, onClose, onIssueWarrant }: ProfileModalProps) {
+export function ProfileModal({ citizen, onClose, onIssueWarrant, onChargesIssued }: ProfileModalProps) {
   const [editingPicture, setEditingPicture] = useState(false);
   const [pictureUrl, setPictureUrl] = useState('');
   const [savingPicture, setSavingPicture] = useState(false);
-  const records = citizen.records || [];
+  const [showChargeModal, setShowChargeModal] = useState(false);
+  const [charges, setCharges] = useState<IssuedCharge[]>([]);
+  const [loadingCharges, setLoadingCharges] = useState(true);
+  const [selectedCharge, setSelectedCharge] = useState<IssuedCharge | null>(null);
+
+  const fetchCharges = useCallback(async () => {
+    setLoadingCharges(true);
+    const result = await fetchNui<IssuedCharge[]>('getIssuedCharges', { citizenid: citizen.citizenid }, []);
+    setCharges(result || []);
+    setLoadingCharges(false);
+  }, [citizen.citizenid]);
+
+  useEffect(() => {
+    fetchCharges();
+  }, [fetchCharges]);
+
+  useNuiEvent<{ citizenid: string }>('chargesUpdated', (data) => {
+    if (data && data.citizenid === citizen.citizenid) {
+      fetchCharges();
+    }
+  });
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (selectedCharge) {
+          setSelectedCharge(null);
+        } else if (showChargeModal) {
+          setShowChargeModal(false);
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [onClose, selectedCharge, showChargeModal]);
 
   const handleSavePicture = async () => {
     if (savingPicture) return;
@@ -37,6 +69,12 @@ export function ProfileModal({ citizen, onClose, onIssueWarrant }: ProfileModalP
       setPictureUrl('');
     }
     setSavingPicture(false);
+  };
+
+  const handleChargesIssued = () => {
+    setShowChargeModal(false);
+    fetchCharges();
+    onChargesIssued?.();
   };
 
   return (
@@ -146,50 +184,64 @@ export function ProfileModal({ citizen, onClose, onIssueWarrant }: ProfileModalP
                       Issue Warrant
                     </button>
                   )}
+                  <button
+                    onClick={() => setShowChargeModal(true)}
+                    className="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                  >
+                    Issue Charges
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-6">
-                <div className="bg-zinc-800/50 rounded-lg p-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-zinc-800/50 rounded-lg p-3">
                   <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Gender</p>
-                  <p className="text-white text-lg">{citizen.charinfo?.gender === 0 ? 'Male' : 'Female'}</p>
+                  <p className="text-white">{citizen.charinfo?.gender === 0 ? 'Male' : 'Female'}</p>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4">
+                <div className="bg-zinc-800/50 rounded-lg p-3">
                   <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Birthdate</p>
-                  <p className="text-white text-lg">{citizen.charinfo?.birthdate || 'Unknown'}</p>
+                  <p className="text-white">{citizen.charinfo?.birthdate || 'Unknown'}</p>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4">
+                <div className="bg-zinc-800/50 rounded-lg p-3">
                   <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Job</p>
-                  <p className="text-white text-lg">{citizen.job?.label || 'Unemployed'}</p>
+                  <p className="text-white">{citizen.job?.label || 'Unemployed'}</p>
                 </div>
               </div>
 
-              {records && records.length > 0 && (
-                <div className="mt-6">
-                  <h5 className="text-zinc-400 text-sm font-bold mb-3 uppercase tracking-wider">Criminal Records ({records.length})</h5>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {records.map((record) => (
-                      <div key={record.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-medium">{record.crime}</span>
-                          <span className="text-zinc-500 text-xs">{record.date}</span>
-                        </div>
-                        {record.description && (
-                          <p className="text-zinc-400 text-sm mt-1">{record.description}</p>
-                        )}
-                        <div className="flex gap-4 mt-2 text-xs">
-                          {record.fine > 0 && <span className="text-amber-400">Fine: ${record.fine}</span>}
-                          {record.jailtime > 0 && <span className="text-red-400">Time: {record.jailtime}mo</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="mt-6">
+                <h5 className="text-zinc-400 text-sm font-bold mb-3 uppercase tracking-wider flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Criminal Records
+                </h5>
+                <CriminalRecordList
+                  charges={charges}
+                  loading={loadingCharges}
+                  onChargeClick={setSelectedCharge}
+                  onRefresh={fetchCharges}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {showChargeModal && (
+        <IssueChargesModal
+          citizenid={citizen.citizenid}
+          citizenName={`${citizen.charinfo?.firstname} ${citizen.charinfo?.lastname}`}
+          onClose={() => setShowChargeModal(false)}
+          onIssued={handleChargesIssued}
+        />
+      )}
+
+      {selectedCharge && (
+        <ChargeDetailModal
+          charge={selectedCharge}
+          onClose={() => setSelectedCharge(null)}
+        />
+      )}
     </div>
   );
 }

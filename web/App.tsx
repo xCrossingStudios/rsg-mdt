@@ -5,7 +5,7 @@ import { Window } from './components/Window';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { CitizenLookup } from './pages/CitizenLookup';
-import { Records } from './pages/Records';
+import { CriminalRecords } from './pages/CriminalRecords';
 import { Warrants } from './pages/Warrants';
 import { Bolos } from './pages/Bolos';
 import { Reports } from './pages/Reports';
@@ -109,7 +109,7 @@ export default function App() {
               setWarrantPrefill({ citizenid, name });
               setCurrentPage('warrants');
             }} />}
-            {currentPage === 'records' && <Records onRefresh={refreshStats} />}
+            {currentPage === 'records' && <CriminalRecords />}
             {currentPage === 'warrants' && <Warrants onRefresh={refreshStats} prefill={warrantPrefill} onClearPrefill={() => setWarrantPrefill(null)} />}
             {currentPage === 'bolos' && <Bolos onRefresh={refreshStats} />}
             {currentPage === 'reports' && <Reports onRefresh={refreshStats} />}

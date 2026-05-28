@@ -368,3 +368,48 @@ end)
 RegisterNetEvent('rsg-mdt:client:departmentUpdated', function(data)
     SendNUIMessage(json.encode({ action = 'departmentUpdated', data = data }))
 end)
+
+-- Charges
+RegisterNuiCallback('getChargeTemplates', function(_, cb)
+    local templates = lib.callback.await('rsg-mdt:server:getChargeTemplates')
+    cb(templates or {})
+end)
+
+RegisterNuiCallback('addChargeTemplate', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:addChargeTemplate', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('updateChargeTemplate', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:updateChargeTemplate', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('deleteChargeTemplate', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:deleteChargeTemplate', false, data.id)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('issueCharges', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:issueCharges', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('getIssuedCharges', function(data, cb)
+    local charges = lib.callback.await('rsg-mdt:server:getIssuedCharges', false, data.citizenid)
+    cb(charges or {})
+end)
+
+RegisterNetEvent('rsg-mdt:client:chargesUpdated', function(data)
+    SendNUIMessage(json.encode({ action = 'chargesUpdated', data = data }))
+end)
+
+RegisterNuiCallback('getAllIssuedCharges', function(data, cb)
+    local charges = lib.callback.await('rsg-mdt:server:getAllIssuedCharges', false, data and data.query)
+    cb(charges or {})
+end)
+
+RegisterNuiCallback('getChargeDetails', function(data, cb)
+    local charge = lib.callback.await('rsg-mdt:server:getChargeDetails', false, data.id)
+    cb(charge or {})
+end)

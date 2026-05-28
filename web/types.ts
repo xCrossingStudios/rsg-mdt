@@ -177,3 +177,58 @@ export interface SyncResult {
   added: number;
   players?: { citizenid: string; name: string; job: string }[];
 }
+
+export interface ChargeTemplate {
+  id: number;
+  name: string;
+  description: string | null;
+  fine: number;
+  jailtime: number;
+  category: string;
+  created_by: string | null;
+  created_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IssuedCharge {
+  id: number;
+  citizenid: string;
+  citizen_name: string;
+  charge_template_id: number | null;
+  charge_name: string;
+  charge_description: string | null;
+  fine: number;
+  jailtime: number;
+  officer: string;
+  officer_cid: string | null;
+  report_id: number | null;
+  created_at: string;
+  category?: string;
+}
+
+export interface ChargeFormData {
+  name: string;
+  description: string;
+  fine: number;
+  jailtime: number;
+  category: string;
+}
+
+export interface IssueChargesData {
+  citizenid: string;
+  charges: {
+    templateId?: number;
+    name: string;
+    description?: string;
+    fine: number;
+    jailtime: number;
+  }[];
+  reportId?: number;
+}
+
+export interface ChargeCategory {
+  value: string;
+  label: string;
+  color: string;
+}

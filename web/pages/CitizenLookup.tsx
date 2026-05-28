@@ -144,6 +144,10 @@ export function CitizenLookup({ onIssueWarrant }: CitizenLookupProps) {
           citizen={selected}
           onClose={() => setSelected(null)}
           onIssueWarrant={onIssueWarrant}
+          onChargesIssued={async () => {
+            const data = await fetchNui<Citizen>('getCitizen', { citizenid: selected.citizenid }, selected);
+            setSelected(data);
+          }}
         />
       )}
     </div>

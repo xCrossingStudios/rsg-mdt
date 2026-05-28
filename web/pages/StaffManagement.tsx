@@ -4,8 +4,9 @@ import type { StaffMember, ConfigRole, AuditLog, StaffPermissions, Citizen, LawJ
 import { ConfirmModal } from '../components/ConfirmModal';
 import { JobAssignment } from '../components/JobAssignment';
 import { OfficerDetailModal } from '../components/OfficerDetailModal';
+import { AdminChargesManager } from '../components/AdminChargesManager';
 
-type Tab = 'staff' | 'officers' | 'roles' | 'logs' | 'jobs';
+type Tab = 'staff' | 'officers' | 'roles' | 'logs' | 'jobs' | 'charges';
 
 export function StaffManagement() {
   const [activeTab, setActiveTab] = useState<Tab>('staff');
@@ -284,7 +285,7 @@ export function StaffManagement() {
       )}
 
       <div className="flex gap-2 border-b border-zinc-800 pb-2">
-        {(['staff', 'officers', 'roles', 'logs', 'jobs'] as Tab[]).map((tab) => (
+        {(['staff', 'officers', 'roles', 'logs', 'jobs', 'charges'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -297,7 +298,7 @@ export function StaffManagement() {
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            {tab === 'staff' ? 'Staff Members' : tab === 'officers' ? 'Officers' : tab === 'roles' ? 'Roles' : tab === 'logs' ? 'Activity Log' : 'Job Assignment'}
+            {tab === 'staff' ? 'Staff Members' : tab === 'officers' ? 'Officers' : tab === 'roles' ? 'Roles' : tab === 'logs' ? 'Activity Log' : tab === 'jobs' ? 'Job Assignment' : 'Charges'}
           </button>
         ))}
       </div>
@@ -635,6 +636,10 @@ export function StaffManagement() {
 
       {activeTab === 'jobs' && (
         <JobAssignment lawJobs={lawJobs} />
+      )}
+
+      {activeTab === 'charges' && (
+        <AdminChargesManager />
       )}
 
       {showAddModal && (
