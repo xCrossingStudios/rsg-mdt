@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { IssuedCharge } from '../types';
 
 interface CriminalRecordListProps {
@@ -5,6 +6,124 @@ interface CriminalRecordListProps {
   loading: boolean;
   onChargeClick: (charge: IssuedCharge) => void;
   onRefresh?: () => void;
+}
+
+interface TimeRemaining {
+  text: string;
+  isOverdue: boolean;
+  seconds: number;
+}
+
+function formatTimeRemaining(dueDate: string | null | undefined | number): TimeRemaining {
+  if (!dueDate) {
+    return { text: '', isOverdue: false, seconds: 0 };
+  }
+  
+  let due: number;
+  
+  if (typeof dueDate === 'number') {
+    if (dueDate > 1e12) {
+      due = dueDate;
+    } else if (dueDate > 1e9) {
+      due = dueDate * 1000;
+    } else {
+      return { text: '', isOverdue: false, seconds: 0 };
+    }
+  } else {
+    const dateStr = String(dueDate).trim();
+    if (!dateStr || dateStr === 'null' || dateStr === 'undefined') {
+      return { text: '', isOverdue: false, seconds: 0 };
+    }
+    
+    let parsed: Date;
+    if (dateStr.includes('T')) {
+      parsed = new Date(dateStr);
+    } else {
+      parsed = new Date(dateStr.replace(' ', 'T') + 'Z');
+    }
+    
+    due = parsed.getTime();
+  }
+  
+  if (isNaN(due)) {
+    return { text: '', isOverdue: false, seconds: 0 };
+  }
+  
+  const now = Date.now();
+  const remaining = due - now;
+  
+  if (remaining <= 0) {
+    return { text: 'OVERDUE', isOverdue: true, seconds: 0 };
+  }
+  
+  const MAX_DAYS = 365;
+  const days = Math.floor(remaining / 86400000);
+  
+  if (days > MAX_DAYS) {
+    return { text: '', isOverdue: false, seconds: 0 };
+  }
+  
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  
+  if (days > 0) {
+    return { text: `${days}d ${hours}h`, isOverdue: false, seconds: Math.floor(remaining / 1000) };
+  } else if (hours > 0) {
+    return { text: `${hours}h ${minutes}m`, isOverdue: false, seconds: Math.floor(remaining / 1000) };
+  } else {
+    return { text: `${minutes}m`, isOverdue: false, seconds: Math.floor(remaining / 1000) };
+  }
+}
+
+function ChargeTimer({ dueDate, fineStatus }: { dueDate: string | null | undefined; fineStatus: string | null | undefined }) {
+  const [timeInfo, setTimeInfo] = useState<TimeRemaining>(() => formatTimeRemaining(dueDate));
+  
+  useEffect(() => {
+    if (fineStatus === 'paid' || !dueDate) return;
+    
+    const updateTimer = () => {
+      setTimeInfo(formatTimeRemaining(dueDate));
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [dueDate, fineStatus]);
+  
+  if (fineStatus === 'paid') {
+    return (
+      <span className="flex items-center gap-1 text-green-400 text-xs font-medium">
+        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        </svg>
+        PAID
+      </span>
+    );
+  }
+  
+  if (fineStatus === 'overdue' || timeInfo.isOverdue) {
+    return (
+      <span className="flex items-center gap-1 text-red-400 text-xs font-medium animate-pulse">
+        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+        OVERDUE
+      </span>
+    );
+  }
+  
+  if (fineStatus === 'unpaid' && timeInfo.text) {
+    return (
+      <span className="flex items-center gap-1 text-amber-400 text-xs font-medium">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {timeInfo.text}
+      </span>
+    );
+  }
+  
+  return null;
 }
 
 export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh }: CriminalRecordListProps) {
@@ -25,6 +144,33 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
       case 'misdemeanor': return 'text-amber-400 bg-amber-400/10 border-amber-400/30';
       case 'infraction': return 'text-zinc-400 bg-zinc-400/10 border-zinc-400/30';
       default: return 'text-zinc-400 bg-zinc-400/10 border-zinc-400/30';
+    }
+  };
+
+  const getStatusBadge = (fineStatus: string | null | undefined, fine: number) => {
+    if (fine <= 0) return null;
+    
+    switch (fineStatus) {
+      case 'paid':
+        return (
+          <span className="text-xs px-2 py-0.5 rounded border bg-green-400/10 text-green-400 border-green-400/30">
+            Paid
+          </span>
+        );
+      case 'overdue':
+        return (
+          <span className="text-xs px-2 py-0.5 rounded border bg-red-400/10 text-red-400 border-red-400/30 animate-pulse">
+            Overdue
+          </span>
+        );
+      case 'unpaid':
+        return (
+          <span className="text-xs px-2 py-0.5 rounded border bg-amber-400/10 text-amber-400 border-amber-400/30">
+            Unpaid
+          </span>
+        );
+      default:
+        return null;
     }
   };
 
@@ -54,6 +200,7 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
 
   const totalFines = charges.reduce((sum, c) => sum + (c.fine || 0), 0);
   const totalJailtime = charges.reduce((sum, c) => sum + (c.jailtime || 0), 0);
+  const unpaidFines = charges.filter(c => c.fine > 0 && c.fine_status !== 'paid');
 
   return (
     <div className="space-y-3">
@@ -62,6 +209,9 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
           <span className="text-zinc-400">{charges.length} charge(s)</span>
           {totalFines > 0 && (
             <span className="text-amber-400 font-medium">${totalFines.toLocaleString()} total fines</span>
+          )}
+          {unpaidFines.length > 0 && (
+            <span className="text-red-400 font-medium">{unpaidFines.length} unpaid</span>
           )}
           {totalJailtime > 0 && (
             <span className="text-red-400 font-medium">{totalJailtime} months total</span>
@@ -88,11 +238,12 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-white font-medium truncate">{charge.charge_name}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded border ${getCategoryColor('felony')}`}>
-                    Charge
+                  <span className={`text-xs px-2 py-0.5 rounded border ${getCategoryColor(charge.category || 'misdemeanor')}`}>
+                    {charge.category || 'Charge'}
                   </span>
+                  {getStatusBadge(charge.fine_status, charge.fine)}
                 </div>
                 {charge.charge_description && (
                   <p className="text-zinc-500 text-sm truncate">{charge.charge_description}</p>
@@ -106,7 +257,7 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
               </div>
             </div>
             
-            <div className="flex items-center gap-4 mt-2 pt-2 border-t border-zinc-700/50">
+            <div className="flex items-center gap-4 mt-2 pt-2 border-t border-zinc-700/50 flex-wrap">
               <div className="flex items-center gap-1 text-xs">
                 <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -115,7 +266,10 @@ export function CriminalRecordList({ charges, loading, onChargeClick, onRefresh 
                 <span className="text-zinc-300">{charge.officer}</span>
               </div>
               {charge.fine > 0 && (
-                <span className="text-amber-400 text-xs font-medium">${charge.fine} fine</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400 text-xs font-medium">${charge.fine} fine</span>
+                  <ChargeTimer dueDate={charge.due_date} fineStatus={charge.fine_status} />
+                </div>
               )}
               {charge.jailtime > 0 && (
                 <span className="text-red-400 text-xs font-medium">{charge.jailtime} mo</span>

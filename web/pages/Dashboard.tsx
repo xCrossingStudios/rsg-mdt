@@ -12,6 +12,7 @@ export function Dashboard({ stats, officer, onPageChange }: DashboardProps) {
     { label: 'Active Warrants', value: stats?.activeWarrants ?? 0, color: 'from-red-950/50 to-red-900/30', accent: 'text-red-400' },
     { label: 'Active BOLOs', value: stats?.activeBolos ?? 0, color: 'from-orange-950/50 to-orange-900/30', accent: 'text-orange-400' },
     { label: 'Reports Filed', value: stats?.reports ?? 0, color: 'from-blue-950/50 to-blue-900/30', accent: 'text-blue-400' },
+    { label: 'Unpaid Fines', value: stats?.unpaidFines ?? 0, color: 'from-amber-950/50 to-amber-900/30', accent: 'text-amber-400' },
   ];
 
   const quickActions = [

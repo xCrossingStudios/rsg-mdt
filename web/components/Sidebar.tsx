@@ -16,7 +16,7 @@ const baseNavItems = [
   { id: 'reports', label: 'Reports', icon: '▤' },
 ];
 
-const adminNavItem = { id: 'staff', label: 'Staff Management', icon: '⚙' };
+const adminNavItem = { id: 'staff', label: 'Management', icon: '⚙' };
 
 export function Sidebar({ officer, currentPage, onPageChange, isAdmin }: SidebarProps) {
   const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;

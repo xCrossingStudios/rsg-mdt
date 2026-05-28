@@ -14,6 +14,7 @@ export interface Citizen {
   profilePicture?: string | null;
   isWanted?: boolean;
   records?: CriminalRecord[];
+  fines?: Fine[];
 }
 
 export interface CriminalRecord {
@@ -74,6 +75,7 @@ export interface Stats {
   activeWarrants: number;
   activeBolos: number;
   reports: number;
+  unpaidFines?: number;
 }
 
 export interface IncidentType {
@@ -205,6 +207,10 @@ export interface IssuedCharge {
   report_id: number | null;
   created_at: string;
   category?: string;
+  fine_id?: number | null;
+  due_date?: string | null;
+  fine_status?: 'unpaid' | 'paid' | 'overdue' | null;
+  paid_at?: string | null;
 }
 
 export interface ChargeFormData {
@@ -231,4 +237,19 @@ export interface ChargeCategory {
   value: string;
   label: string;
   color: string;
+}
+
+export interface Fine {
+  id: number;
+  citizenid: string;
+  citizen_name: string;
+  issued_charge_ids: number[];
+  total_amount: number;
+  due_date: string;
+  status: 'unpaid' | 'paid' | 'overdue';
+  issued_at: string;
+  paid_at: string | null;
+  officer_name: string;
+  officer_cid: string | null;
+  paid_to_officer: string | null;
 }
