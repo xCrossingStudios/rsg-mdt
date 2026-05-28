@@ -133,6 +133,11 @@ RegisterNuiCallback('close', function(_, cb)
 end)
 
 -- Citizens
+RegisterNuiCallback('getAllCitizens', function(_, cb)
+    local results = lib.callback.await('rsg-mdt:server:getAllCitizens')
+    cb(results or {})
+end)
+
 RegisterNuiCallback('searchCitizens', function(data, cb)
     local results = lib.callback.await('rsg-mdt:server:searchCitizens', false, data.query)
     cb(results or {})

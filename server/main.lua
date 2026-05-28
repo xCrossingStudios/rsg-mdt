@@ -256,34 +256,75 @@ end
 -- ============================================
 -- Callbacks: Citizens
 -- ============================================
+lib.callback.register('rsg-mdt:server:getAllCitizens', function(source)
+    if not hasAccess(source) then return {} end
+
+    local results = MySQL.query.await("SELECT citizenid, charinfo, job FROM players")
+    if not results then return {} end
+
+    local citizenids = {}
+    local citizensMap = {}
+    for _, row in ipairs(results) do
+        local charinfo = row.charinfo and json.decode(row.charinfo) or {}
+        local job = row.job and json.decode(row.job) or {}
+        table.insert(citizenids, row.citizenid)
+        citizensMap[row.citizenid] = {
+            citizenid = row.citizenid,
+            charinfo = charinfo,
+            job = job,
+            isWanted = false
+        }
+    end
+
+    if #citizenids > 0 then
+        local placeholders = {}
+        for i = 1, #citizenids do
+            table.insert(placeholders, '?')
+        end
+        local warrantQuery = 'SELECT DISTINCT citizenid FROM mdt_warrants WHERE citizenid IN (' .. table.concat(placeholders, ',') .. ") AND status = 'active'"
+        local warrantResults = MySQL.query.await(warrantQuery, citizenids)
+        if warrantResults then
+            for _, warrant in ipairs(warrantResults) do
+                if citizensMap[warrant.citizenid] then
+                    citizensMap[warrant.citizenid].isWanted = true
+                end
+            end
+        end
+    end
+
+    local citizens = {}
+    for _, citizen in pairs(citizensMap) do
+        table.insert(citizens, citizen)
+    end
+
+    return citizens
+end)
+
 lib.callback.register('rsg-mdt:server:searchCitizens', function(source, query)
     if not hasAccess(source) then return {} end
 
     query = string.lower(query or '')
     if #query < 2 then return {} end
 
-    -- Split query into terms for multi-word search
     local searchTerms = {}
     for term in string.gmatch(query, '%S+') do
         table.insert(searchTerms, term)
     end
 
-    -- Fetch all players and filter in Lua (handles JSON name matching)
     local results = MySQL.query.await("SELECT citizenid, charinfo, job FROM players")
     if not results then return {} end
 
-    local citizens = {}
+    local citizenids = {}
+    local citizensMap = {}
     for _, row in ipairs(results) do
         local charinfo = row.charinfo and json.decode(row.charinfo) or {}
         local job = row.job and json.decode(row.job) or {}
 
-        -- Build searchable fields
         local citizenid = string.lower(row.citizenid or '')
         local firstname = string.lower(charinfo.firstname or '')
         local lastname = string.lower(charinfo.lastname or '')
         local fullname = firstname .. ' ' .. lastname
 
-        -- Check if all search terms match
         local matchesAll = true
         for _, term in ipairs(searchTerms) do
             local matchesTerm = (
@@ -299,12 +340,35 @@ lib.callback.register('rsg-mdt:server:searchCitizens', function(source, query)
         end
 
         if matchesAll then
-            table.insert(citizens, {
+            table.insert(citizenids, row.citizenid)
+            citizensMap[row.citizenid] = {
                 citizenid = row.citizenid,
                 charinfo = charinfo,
-                job = job
-            })
+                job = job,
+                isWanted = false
+            }
         end
+    end
+
+    if #citizenids > 0 then
+        local placeholders = {}
+        for i = 1, #citizenids do
+            table.insert(placeholders, '?')
+        end
+        local warrantQuery = 'SELECT DISTINCT citizenid FROM mdt_warrants WHERE citizenid IN (' .. table.concat(placeholders, ',') .. ") AND status = 'active'"
+        local warrantResults = MySQL.query.await(warrantQuery, citizenids)
+        if warrantResults then
+            for _, warrant in ipairs(warrantResults) do
+                if citizensMap[warrant.citizenid] then
+                    citizensMap[warrant.citizenid].isWanted = true
+                end
+            end
+        end
+    end
+
+    local citizens = {}
+    for _, citizen in pairs(citizensMap) do
+        table.insert(citizens, citizen)
     end
 
     return citizens
@@ -345,13 +409,24 @@ lib.callback.register('rsg-mdt:server:getCitizen', function(source, citizenid)
         end
     end
 
-    -- Fetch profile picture from MDT profiles table
     if citizen then
         local profileResult = MySQL.query.await(
             'SELECT profile_picture FROM mdt_citizen_profiles WHERE citizenid = ?',
             { citizenid }
         )
         citizen.profilePicture = profileResult and profileResult[1] and profileResult[1].profile_picture or nil
+
+        local warrantResult = MySQL.query.await(
+            "SELECT id FROM mdt_warrants WHERE citizenid = ? AND status = 'active' LIMIT 1",
+            { citizenid }
+        )
+        citizen.isWanted = warrantResult and warrantResult[1] ~= nil
+
+        local recordsResult = MySQL.query.await(
+            'SELECT * FROM mdt_records WHERE citizenid = ? ORDER BY created_at DESC',
+            { citizenid }
+        )
+        citizen.records = recordsResult or {}
     end
 
     return citizen

@@ -12,6 +12,8 @@ export interface Citizen {
   money?: { cash: number; bank: number; bloodmoney: number };
   metadata?: { [key: string]: any };
   profilePicture?: string | null;
+  isWanted?: boolean;
+  records?: CriminalRecord[];
 }
 
 export interface CriminalRecord {
