@@ -671,12 +671,14 @@ lib.callback.register('rsg-mdt:server:getStats', function(source)
     local activeWarrants = MySQL.query.await("SELECT COUNT(*) as count FROM mdt_warrants WHERE status = 'active'")
     local boloCount = MySQL.query.await('SELECT COUNT(*) as count FROM mdt_bolos')
     local reportCount = MySQL.query.await('SELECT COUNT(*) as count FROM mdt_reports')
+    local unpaidFines = MySQL.query.await("SELECT COUNT(*) as count FROM mdt_fines WHERE status IN ('unpaid', 'overdue')")
     
     return {
         records = recordCount and recordCount[1] and recordCount[1].count or 0,
         activeWarrants = activeWarrants and activeWarrants[1] and activeWarrants[1].count or 0,
         activeBolos = boloCount and boloCount[1] and boloCount[1].count or 0,
-        reports = reportCount and reportCount[1] and reportCount[1].count or 0
+        reports = reportCount and reportCount[1] and reportCount[1].count or 0,
+        unpaidFines = unpaidFines and unpaidFines[1] and unpaidFines[1].count or 0
     }
 end)
 

@@ -89,3 +89,18 @@ Config.Defaults = {
         isAdmin = false
     }
 }
+
+-- ============================================
+-- Fines System
+-- ============================================
+Config.Fines = {
+    enabled = true,
+    gracePeriodDays = 7,
+    paymentLocations = {
+        { name = 'Valentine Sheriff', coords = vector3(-277.44, 801.34, 119.37), heading = 189.50 },
+        { name = 'Rhodes Sheriff', coords = vector3(1359.42, -1310.35, 76.93), heading = 167.26 },
+        { name = 'Blackwater Sheriff', coords = vector3(-756.42, -1272.22, 44.03), heading = 270.23 },
+        { name = 'Saint Denis Police', coords = vector3(2492.52, -1313.66, 48.87), heading = 101.96 },
+        { name = 'Strawberry Sheriff', coords = vector3(-1805.19, -348.85, 164.20), heading = 255.00 },
+    }
+}

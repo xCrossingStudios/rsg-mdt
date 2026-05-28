@@ -378,12 +378,15 @@ lib.callback.register('rsg-mdt:server:issueCharges', function(source, data)
         end
     end
     
-    if #issuedCharges > 0 then
-        if totalFine > 0 and targetPlayer then
-            if targetPlayer.Functions.RemoveMoney then
-                targetPlayer.Functions.RemoveMoney('cash', totalFine, 'mdt-charges')
+        if #issuedCharges > 0 then
+            local chargeIds = {}
+            for _, issued in ipairs(issuedCharges) do
+                table.insert(chargeIds, issued.id)
             end
-        end
+            
+            if totalFine > 0 then
+                exports['rsg-mdt']:createOrUpdateFine(citizenid, citizenName, chargeIds, totalFine, officerName, officerCid)
+            end
         
         logChargeAction(source, 'charges_issued', 'citizen', citizenid, citizenName, {
             charges = issuedCharges,
@@ -428,6 +431,41 @@ lib.callback.register('rsg-mdt:server:getIssuedCharges', function(source, citize
         "SELECT * FROM mdt_issued_charges WHERE citizenid = ? ORDER BY created_at DESC",
         { citizenid }
     )
+    
+    local finesResult = MySQL.query.await(
+        "SELECT id, issued_charge_ids, due_date, status, paid_at FROM mdt_fines WHERE citizenid = ?",
+        { citizenid }
+    )
+    
+    local chargeIdToFine = {}
+    for _, fine in ipairs(finesResult or {}) do
+        if fine.issued_charge_ids and type(fine.issued_charge_ids) == 'string' then
+            local chargeIds = json.decode(fine.issued_charge_ids)
+            for _, chargeId in ipairs(chargeIds or {}) do
+                chargeIdToFine[chargeId] = {
+                    fine_id = fine.id,
+                    due_date = fine.due_date,
+                    fine_status = fine.status,
+                    paid_at = fine.paid_at
+                }
+            end
+        end
+    end
+    
+    for _, charge in ipairs(charges or {}) do
+        local fineInfo = chargeIdToFine[charge.id]
+        if fineInfo then
+            charge.fine_id = fineInfo.fine_id
+            charge.due_date = fineInfo.due_date
+            charge.fine_status = fineInfo.fine_status
+            charge.paid_at = fineInfo.paid_at
+        else
+            charge.fine_id = nil
+            charge.due_date = nil
+            charge.fine_status = charge.fine and charge.fine > 0 and 'unpaid' or nil
+            charge.paid_at = nil
+        end
+    end
     
     return charges or {}
 end)

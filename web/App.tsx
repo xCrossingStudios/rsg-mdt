@@ -64,7 +64,8 @@ export default function App() {
       records: 12,
       activeWarrants: 3,
       activeBolos: 2,
-      reports: 8
+      reports: 8,
+      unpaidFines: 5
     });
     setStats(s);
   }, []);
