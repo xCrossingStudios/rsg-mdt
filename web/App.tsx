@@ -9,8 +9,9 @@ import { Records } from './pages/Records';
 import { Warrants } from './pages/Warrants';
 import { Bolos } from './pages/Bolos';
 import { Reports } from './pages/Reports';
+import { StaffManagement } from './pages/StaffManagement';
 
-type Page = 'dashboard' | 'citizens' | 'records' | 'warrants' | 'bolos' | 'reports';
+type Page = 'dashboard' | 'citizens' | 'records' | 'warrants' | 'bolos' | 'reports' | 'staff';
 
 interface WarrantPrefill {
   citizenid: string;
@@ -24,16 +25,27 @@ interface WindowConfig {
   y?: number;
 }
 
+interface Permissions {
+  canCreateRecords?: boolean;
+  canDeleteRecords?: boolean;
+  canManageWarrants?: boolean;
+  isAdmin?: boolean;
+}
+
 export default function App() {
   const [visible, setVisible] = useState(isDebug);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [officer, setOfficer] = useState<Officer | null>(null);
+  const [permissions, setPermissions] = useState<Permissions | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [windowConfig, setWindowConfig] = useState<WindowConfig>({});
   const [warrantPrefill, setWarrantPrefill] = useState<WarrantPrefill | null>(null);
 
-  useNuiEvent<Officer & { window?: WindowConfig }>('open', (data) => {
+  useNuiEvent<Officer & { permissions?: Permissions; window?: WindowConfig }>('open', (data) => {
     setOfficer(data);
+    if (data.permissions) {
+      setPermissions(data.permissions);
+    }
     if (data.window) {
       setWindowConfig(data.window);
     }
@@ -86,6 +98,7 @@ export default function App() {
           officer={officer}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
+          isAdmin={permissions?.isAdmin}
         />
 
         {/* Main Content */}
@@ -100,6 +113,7 @@ export default function App() {
             {currentPage === 'warrants' && <Warrants onRefresh={refreshStats} prefill={warrantPrefill} onClearPrefill={() => setWarrantPrefill(null)} />}
             {currentPage === 'bolos' && <Bolos onRefresh={refreshStats} />}
             {currentPage === 'reports' && <Reports onRefresh={refreshStats} />}
+            {currentPage === 'staff' && permissions?.isAdmin && <StaffManagement />}
           </div>
         </div>
       </Window>

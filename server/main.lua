@@ -138,10 +138,6 @@ exports('getConfigVersion', function()
     return configVersion
 end)
 
-exports('isAdmin', function(source)
-    return hasPermission(source, 'isAdmin')
-end)
-
 exports('reloadConfig', function()
     Config.LawJobs = {}
     Config.Settings = {}
@@ -230,28 +226,6 @@ AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
     validateConfig()
 end)
-
--- ============================================
--- Helper: Get all players data
--- ============================================
-local function getAllCitizens()
-    local citizens = {}
-    local players = RSGCore.Functions.GetPlayers()
-    for _, playerId in ipairs(players) do
-        local player = RSGCore.Functions.GetPlayer(tonumber(playerId))
-        if player then
-            local data = player.PlayerData
-            table.insert(citizens, {
-                citizenid = data.citizenid,
-                charinfo = data.charinfo,
-                job = data.job,
-                money = data.money,
-                metadata = data.metadata
-            })
-        end
-    end
-    return citizens
-end
 
 -- ============================================
 -- Callbacks: Citizens

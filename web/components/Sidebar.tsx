@@ -4,9 +4,10 @@ interface SidebarProps {
   officer: Officer | null;
   currentPage: string;
   onPageChange: (page: string) => void;
+  isAdmin?: boolean;
 }
 
-const navItems = [
+const baseNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '◈' },
   { id: 'citizens', label: 'Citizen Lookup', icon: '◉' },
   { id: 'records', label: 'Criminal Records', icon: '⊚' },
@@ -15,7 +16,10 @@ const navItems = [
   { id: 'reports', label: 'Reports', icon: '▤' },
 ];
 
-export function Sidebar({ officer, currentPage, onPageChange }: SidebarProps) {
+const adminNavItem = { id: 'staff', label: 'Staff Management', icon: '⚙' };
+
+export function Sidebar({ officer, currentPage, onPageChange, isAdmin }: SidebarProps) {
+  const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
   return (
     <div className="w-64 flex flex-col border-r border-zinc-800" style={{ background: 'linear-gradient(180deg, #18181b 0%, #0f0f10 100%)' }}>
       {/* Header */}

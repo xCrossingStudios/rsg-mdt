@@ -1,6 +1,10 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local isOpen = false
 
+local function setIsOpen(value)
+    isOpen = value
+end
+
 -- ============================================
 -- Client Access State
 -- ============================================
@@ -74,11 +78,20 @@ RegisterNetEvent('rsg-mdt:client:receiveConfig', function(data)
     TriggerEvent('rsg-mdt:configReceived', data)
 end)
 
+RegisterNetEvent('rsg-mdt:client:staffUpdated', function(data)
+    SendNUIMessage(json.encode({ action = 'staffUpdated', data = data }))
+end)
+
+RegisterNetEvent('rsg-mdt:client:rolesUpdated', function(data)
+    SendNUIMessage(json.encode({ action = 'rolesUpdated', data = data }))
+end)
+
 -- ============================================
 -- Initialization
 -- ============================================
 CreateThread(function()
     Wait(2000)
+    NUI.SetStateCallback(setIsOpen)
     RefreshMDTAccess()
 end)
 
@@ -105,11 +118,9 @@ RegisterCommand('mdt', function()
     
     if isOpen then
         NUI.Close()
-        isOpen = false
     else
         local officerInfo = lib.callback.await('rsg-mdt:server:getOfficerInfo')
         NUI.Open({ officer = officerInfo, permissions = GetMDTPermissions() })
-        isOpen = true
     end
 end, false)
 
@@ -128,7 +139,6 @@ lib.addKeybind({
 -- ============================================
 RegisterNuiCallback('close', function(_, cb)
     NUI.Close()
-    isOpen = false
     cb({ success = true })
 end)
 
@@ -253,4 +263,108 @@ end)
 RegisterNuiCallback('getIncidentTypes', function(_, cb)
     local types = lib.callback.await('rsg-mdt:server:getIncidentTypes')
     cb(types or {})
+end)
+
+-- Staff Management
+RegisterNuiCallback('getStaff', function(_, cb)
+    local staff = lib.callback.await('rsg-mdt:server:getStaff')
+    cb(staff or {})
+end)
+
+RegisterNuiCallback('getRoles', function(_, cb)
+    local roles = lib.callback.await('rsg-mdt:server:getRoles')
+    cb(roles or {})
+end)
+
+RegisterNuiCallback('addStaff', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:addStaff', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('removeStaff', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:removeStaff', false, data.citizenid)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('updateStaffPermissions', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:updateStaffPermissions', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('createRole', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:createRole', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('updateRole', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:updateRole', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('deleteRole', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:deleteRole', false, data.name)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('getAuditLogs', function(data, cb)
+    local logs = lib.callback.await('rsg-mdt:server:getAuditLogs', false, data)
+    cb(logs or {})
+end)
+
+RegisterNuiCallback('searchCitizensForStaff', function(data, cb)
+    local results = lib.callback.await('rsg-mdt:server:searchCitizensForStaff', false, data.query)
+    cb(results or {})
+end)
+
+RegisterNuiCallback('getLawJobs', function(_, cb)
+    local jobs = lib.callback.await('rsg-mdt:server:getLawJobs')
+    cb(jobs or {})
+end)
+
+RegisterNuiCallback('getConfigRoles', function(_, cb)
+    local roles = lib.callback.await('rsg-mdt:server:getConfigRoles')
+    cb(roles or {})
+end)
+
+RegisterNuiCallback('searchPlayersForJob', function(data, cb)
+    local results = lib.callback.await('rsg-mdt:server:searchPlayersForJob', false, data.query)
+    cb(results or {})
+end)
+
+RegisterNuiCallback('assignLawJob', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:assignLawJob', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('getJobGrades', function(data, cb)
+    local grades = lib.callback.await('rsg-mdt:server:getJobGrades', false, data.jobName)
+    cb(grades or {})
+end)
+
+RegisterNetEvent('rsg-mdt:client:jobAssigned', function(data)
+    SendNUIMessage(json.encode({ action = 'jobAssigned', data = data }))
+end)
+
+RegisterNuiCallback('updateOfficerDepartment', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:updateOfficerDepartment', false, data)
+    cb(result or { success = false, message = 'Unknown error' })
+end)
+
+RegisterNuiCallback('getOfficers', function(_, cb)
+    local officers = lib.callback.await('rsg-mdt:server:getOfficers')
+    cb(officers or {})
+end)
+
+RegisterNuiCallback('getJobPlayerCounts', function(_, cb)
+    local counts = lib.callback.await('rsg-mdt:server:getJobPlayerCounts')
+    cb(counts or {})
+end)
+
+RegisterNuiCallback('syncStaffFromJobs', function(data, cb)
+    local result = lib.callback.await('rsg-mdt:server:syncStaffFromJobs', false, data and data.job)
+    cb(result or { success = false, message = 'Unknown error', added = 0 })
+end)
+
+RegisterNetEvent('rsg-mdt:client:departmentUpdated', function(data)
+    SendNUIMessage(json.encode({ action = 'departmentUpdated', data = data }))
 end)

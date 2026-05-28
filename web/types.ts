@@ -81,3 +81,99 @@ export interface IncidentType {
   label: string;
   color: string;
 }
+
+export interface StaffPermissions {
+  canCreateRecords?: boolean;
+  canDeleteRecords?: boolean;
+  canManageWarrants?: boolean;
+  isAdmin?: boolean;
+}
+
+export interface StaffMember {
+  id: number;
+  citizenid: string;
+  name: string;
+  role: string;
+  role_label?: string;
+  permissions: StaffPermissions;
+  department?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  label: string;
+  permissions: StaffPermissions;
+  created_at: string;
+}
+
+export interface ConfigRoleGrade {
+  level: number;
+  label: string;
+  permissions: StaffPermissions;
+}
+
+export interface ConfigRole {
+  name: string;
+  label: string;
+  grades: ConfigRoleGrade[];
+  isConfigRole: boolean;
+}
+
+export interface AuditLog {
+  id: number;
+  action: string;
+  target_type: string;
+  target_id: string;
+  target_name: string;
+  details: string | null;
+  performed_by: string;
+  performed_by_name: string;
+  created_at: string;
+}
+
+export interface LawJob {
+  name: string;
+  label: string;
+}
+
+export interface JobGrade {
+  level: number;
+  label: string;
+  isAdmin: boolean;
+}
+
+export interface PlayerForJob {
+  citizenid: string;
+  charinfo: { firstname: string; lastname: string };
+  job: { name: string; label: string };
+  hasLawJob: boolean;
+  lawJobName?: string;
+}
+
+export interface OfficerForManagement {
+  citizenid: string;
+  name: string;
+  role: string;
+  role_label?: string;
+  jobName?: string;
+  jobLabel?: string;
+  gradeLevel?: number;
+  gradeLabel?: string;
+  isLaw: boolean;
+}
+
+export interface JobPlayerCount {
+  name: string;
+  label: string;
+  count: number;
+}
+
+export interface SyncResult {
+  success: boolean;
+  message: string;
+  added: number;
+  players?: { citizenid: string; name: string; job: string }[];
+}

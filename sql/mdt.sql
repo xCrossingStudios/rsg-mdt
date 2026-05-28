@@ -81,3 +81,46 @@ CREATE TABLE IF NOT EXISTS `mdt_citizen_profiles` (
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_citizenid` (`citizenid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Staff Members Table
+CREATE TABLE IF NOT EXISTS `mdt_staff` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `citizenid` VARCHAR(50) NOT NULL UNIQUE,
+    `name` VARCHAR(100) NOT NULL,
+    `role` VARCHAR(50) DEFAULT 'officer',
+    `permissions` JSON,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_citizenid` (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Roles Table
+CREATE TABLE IF NOT EXISTS `mdt_roles` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(50) NOT NULL UNIQUE,
+    `label` VARCHAR(100) NOT NULL,
+    `permissions` JSON,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Audit Logs Table
+CREATE TABLE IF NOT EXISTS `mdt_audit_logs` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `action` VARCHAR(50) NOT NULL,
+    `target_type` VARCHAR(50),
+    `target_id` VARCHAR(100),
+    `target_name` VARCHAR(100),
+    `details` TEXT,
+    `performed_by` VARCHAR(50) NOT NULL,
+    `performed_by_name` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_action` (`action`),
+    INDEX `idx_performed_by` (`performed_by`),
+    INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Default Roles
+INSERT IGNORE INTO `mdt_roles` (`name`, `label`, `permissions`) VALUES
+    ('admin', 'Administrator', '{"canCreateRecords": true, "canDeleteRecords": true, "canManageWarrants": true, "isAdmin": true}'),
+    ('supervisor', 'Supervisor', '{"canCreateRecords": true, "canDeleteRecords": true, "canManageWarrants": true, "isAdmin": false}'),
+    ('officer', 'Officer', '{"canCreateRecords": true, "canDeleteRecords": false, "canManageWarrants": false, "isAdmin": false}');
